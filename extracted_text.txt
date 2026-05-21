@@ -1,0 +1,359 @@
+
+계  획  서
+
+퇴사자 잔존 지식 복원기
+AI 기반 자동 인수인계 대시보드 생성 시스템
+( 전면 재기획 v2.0 )
+팀명
+TLE
+팀장
+김형준
+팀원
+황연준
+버전
+v2.0 (2026.05)
+
+1. 서비스 재정의
+
+
+1.1 기존 방향과의 차이
+
+구분
+기존 v1 (챗봇)
+신규 v2 (대시보드 생성기)
+서비스 패턴
+수동적 — 사용자가 질문하면 답변
+능동적 — 파일을 넣으면 AI가 알아서 정리
+핵심 기술
+RAG + Vector DB + 질의응답
+ETL 파이프라인 + AI 분류/요약 + 대시보드 렌더링
+LLM 역할
+질문에 대한 답변 생성
+프로젝트·거래처 추출 + 3줄 요약 + 날짜 파싱
+출력물
+채팅 텍스트 답변
+인수인계 웹 대시보드 (탭별 카드 + 타임라인)
+Vector DB
+필수 (pgvector, Chroma 등)
+불필요 — 일반 PostgreSQL 테이블만 사용
+
+1.2 최종 서비스 정의
+퇴사자가 남긴 날것의 파일들(이메일 백업, 슬랙 내보내기, 메모장, 문서 등)을 업로드하면, AI가 자동으로 내용을 분석하여 프로젝트별 / 거래처별 / 타임라인별로 분류하고 핵심 요약이 담긴 인수인계 대시보드 웹페이지를 자동 생성하는 능동적 시스템입니다.
+
+&apos;질문하지 않아도&apos; AI가 먼저 전체 맥락을 파악하고 구조화
+신규 인수자는 대시보드만 열면 퇴사자의 업무 전체를 한눈에 파악 가능
+챗봇, Vector DB, RAG 파이프라인 — 전부 불필요
+
+2. 확정 기술 스택
+
+
+2.1 전체 스택 구성표
+
+영역
+기술
+역할
+비용
+언어
+Python 3.10+
+메인 개발 언어
+무료
+이메일 파싱
+mailbox (Python 내장)
+.mbox 파일 파싱 및 본문/제목/날짜 추출
+무료
+슬랙 파싱
+json (Python 내장)
+Slack Export .json 채널별 메시지 파싱
+무료
+문서 파싱
+PyMuPDF + python-docx
+PDF / DOCX 텍스트 추출
+무료
+텍스트 파싱
+Python 내장
+TXT / 메모장 파일 읽기
+무료
+AI 분류·요약
+OpenAI GPT-4o API
+프로젝트·거래처 추출, 날짜 파싱, 3줄 요약 생성
+유료 (소량)
+데이터베이스
+Supabase PostgreSQL
+분류 결과 카드 저장 (벡터 없이 일반 테이블)
+무료
+대시보드 UI
+Streamlit
+탭별 카드 렌더링, 파일 업로드, 타임라인 표시
+무료
+배포
+Streamlit Community Cloud
+GitHub 연동 원클릭 무료 배포
+무료
+환경변수
+python-dotenv
+API Key 등 보안 정보 관리
+무료
+
+2.2 제거된 패키지 (v1 대비)
+
+제거 패키지
+v1에서의 역할
+제거 이유
+langchain / langchain-openai
+RAG 파이프라인 오케스트레이션
+챗봇 구조 전면 폐기, 직접 OpenAI API 호출로 대체
+chromadb / faiss-cpu
+벡터 유사도 검색 DB
+분류·요약이 목적 → Vector DB 불필요
+supabase vecs
+pgvector 래퍼
+벡터 저장 미사용, 일반 Supabase 클라이언트만 사용
+tiktoken
+토큰 수 계산
+청킹 불필요, 문서 단위 처리로 전환
+
+2.3 최종 설치 명령어
+pip install openai \            streamlit \            pymupdf python-docx \            supabase \            python-dotenv
+
+3. 시스템 아키텍처
+
+
+3.1 전체 데이터 흐름 (7단계)
+
+단계
+작업
+사용 기술
+출력물
+1
+파일 업로드
+Streamlit st.file_uploader (다중 파일, 폴더)
+업로드된 파일 목록
+2
+포맷 감지 및 파싱
+확장자별 라우팅 → mailbox / json / PyMuPDF / python-docx / open()
+각 파일의 순수 텍스트
+3
+GPT-4o 분석
+OpenAI API — 프로젝트명·거래처명·날짜·3줄 요약 추출 (JSON 응답)
+구조화된 카드 데이터 dict
+4
+Supabase 저장
+Supabase PostgreSQL INSERT — documents + cards 테이블
+DB 저장 완료
+5
+대시보드 렌더링
+Streamlit st.tabs + st.expander + st.metric
+인수인계 웹 대시보드
+6
+프로젝트별 탭
+cards 테이블 GROUP BY project → 카드 목록 출력
+프로젝트별 요약 카드
+7
+거래처별 탭 / 타임라인
+GROUP BY client / ORDER BY date → 카드 + 날짜순 리스트
+거래처 카드 / 타임라인
+
+3.2 Supabase DB 스키마
+벡터 없이 일반 PostgreSQL 테이블 2개만 사용합니다. Supabase SQL Editor에서 최초 1회 실행합니다.
+
+-- 1. 원본 문서 테이블 (업로드된 파일 원문 저장)CREATE TABLE documents (  id          BIGSERIAL PRIMARY KEY,  file_name   TEXT,           -- 원본 파일명  source_type TEXT,           -- &apos;email&apos; | &apos;slack&apos; | &apos;docx&apos; | &apos;pdf&apos; | &apos;txt&apos;  raw_content TEXT,           -- 추출된 원문 텍스트  created_at  TIMESTAMPTZ DEFAULT NOW());-- 2. AI 분류 결과 카드 테이블CREATE TABLE cards (  id          BIGSERIAL PRIMARY KEY,  project     TEXT,           -- AI가 추출한 프로젝트명  client      TEXT,           -- AI가 추출한 거래처명  event_date  DATE,           -- AI가 파싱한 날짜  summary     TEXT,           -- AI 3줄 요약  source_type TEXT,           -- 출처 포맷  doc_id      BIGINT REFERENCES documents(id),  created_at  TIMESTAMPTZ DEFAULT NOW());
+
+3.3 GPT-4o 프롬프트 설계
+각 문서에 대해 아래 형식의 JSON 응답을 강제합니다. 응답은 파싱하여 cards 테이블에 저장합니다.
+
+SYSTEM: &quot;다음 문서를 분석하여 JSON만 반환하라. 다른 텍스트 없이.&quot;USER: f&apos;&apos;&apos;문서 내용: {raw_text[:3000]}아래 JSON 형식으로 분석 결과를 반환하라:{  &quot;project&quot;:    &quot;프로젝트명 (불명확하면 null)&quot;,  &quot;client&quot;:     &quot;거래처/고객사명 (없으면 null)&quot;,  &quot;event_date&quot;: &quot;YYYY-MM-DD (불명확하면 null)&quot;,  &quot;summary&quot;:    &quot;핵심 내용 3줄 요약 (한국어)&quot;}&apos;&apos;&apos;
+
+4. 모듈별 구현 상세
+
+
+4.1 파일 파싱 모듈 (황연준 담당)
+
+포맷
+라이브러리
+파싱 방법
+주의사항
+.mbox
+mailbox (내장)
+mailbox.mbox() → msg[&apos;subject&apos;], msg[&apos;date&apos;], msg.get_payload(decode=True)
+멀티파트 이메일은 text/plain 파트만 추출
+.json (Slack)
+json (내장)
+json.load() → channels/*.json → messages[] 순회, text + ts + user 추출
+Slack 봇 메시지(subtype 있음) 필터링 필요
+.pdf
+PyMuPDF
+fitz.open() → page.get_text() 전 페이지 순회 후 join
+스캔 PDF(이미지) 텍스트 추출 불가 — 안내 메시지 표시
+.docx
+python-docx
+Document().paragraphs → .text 순회, 표 내용은 table.rows 별도 처리
+헤더/푸터 포함 여부 선택적 처리
+.txt
+내장 open()
+open(encoding=&apos;utf-8&apos;, errors=&apos;ignore&apos;).read()
+인코딩 오류 대비 errors=&apos;ignore&apos; 필수
+
+4.2 AI 분류·요약 모듈 (김형준 담당)
+파싱된 텍스트를 최대 3,000자로 잘라 GPT-4o에 전달 (API 비용 절감)
+응답은 JSON 파싱 → project / client / event_date / summary 4개 필드 추출
+project 또는 client가 null인 경우 &apos;미분류&apos; 카테고리로 저장
+API 호출 실패 시 3회 재시도 후 오류 로그 기록 및 건너뜀 처리
+
+4.3 Supabase 저장 모듈 (김형준 담당)
+파싱 완료 즉시 documents 테이블에 원문 INSERT
+GPT-4o 분석 완료 즉시 cards 테이블에 결과 INSERT (doc_id 참조)
+배치 처리: 파일 여러 개 업로드 시 순서대로 처리, Streamlit progress bar로 진행률 표시
+
+4.4 대시보드 렌더링 모듈 (황연준 담당)
+
+탭
+Streamlit 컴포넌트
+렌더링 내용
+📁 프로젝트별
+st.tabs → st.expander
+project로 그룹핑 → 각 프로젝트 카드 (거래처명, 날짜, 요약, 출처 파일명)
+🏢 거래처별
+st.tabs → st.expander
+client로 그룹핑 → 각 거래처 카드 (관련 프로젝트, 날짜, 요약)
+📅 타임라인
+st.tabs → 날짜순 리스트
+event_date 오름차순 정렬 → 날짜·프로젝트·거래처·요약 한 줄씩 표시
+📊 요약 통계
+st.metric × 3
+총 문서 수 / 프로젝트 수 / 거래처 수 상단 표시
+
+5. 역할 분담 및 추진 일정
+
+
+5.1 팀원별 담당 모듈
+
+팀원
+역할
+담당 작업
+주요 기술
+김형준
+(팀장)
+백엔드 / AI
+전체 시스템 아키텍처 설계 및 일정 관리
+GPT-4o API 연동 및 분류·요약 프롬프트 설계
+Supabase PostgreSQL 스키마 설계 및 구축
+documents / cards 테이블 INSERT 로직 구현
+API 오류 처리 및 재시도 로직 구현
+Streamlit Cloud 배포 및 Secrets 관리
+OpenAI API
+Supabase
+Python
+황연준
+(팀원)
+파싱 / UI
+포맷별 파싱 모듈 개발 (.mbox / .json / .pdf / .docx / .txt)
+Streamlit 파일 업로드 및 진행 표시 구현
+대시보드 UI 3개 탭 전체 개발
+프로젝트별 / 거래처별 / 타임라인 카드 렌더링
+요약 통계 (st.metric) 상단 섹션 구현
+실제 퇴사자 문서 샘플 기반 시뮬레이션 검증
+PyMuPDF
+python-docx
+Streamlit
+
+5.2 단계별 추진 일정
+
+단계
+기간
+핵심 목표
+세부 작업
+산출물
+1단계
+1 ~ 3주
+파싱 모듈 완성
+Supabase 프로젝트 생성 및 테이블 스키마 설정
+.mbox 이메일 파싱 구현 및 테스트
+.json Slack 백업 파싱 구현
+PDF / DOCX / TXT 파싱 구현
+파싱 모듈 v1
+DB 스키마
+2단계
+4 ~ 8주
+AI 분류·요약 파이프라인
+GPT-4o 프롬프트 설계 및 JSON 파싱
+cards 테이블 저장 로직 연동
+미분류 처리 및 오류 재시도 구현
+다양한 문서 샘플로 분류 정확도 검증
+AI 파이프라인
+동작 확인
+3단계
+9 ~ 11주
+대시보드 UI 개발
+Streamlit 3탭 대시보드 구현
+프로젝트별 / 거래처별 카드 렌더링
+타임라인 뷰 구현
+Streamlit Community Cloud 배포
+배포된
+대시보드 URL
+4단계
+12 ~ 15주
+검증 및 최종 보고
+실제 퇴사자 문서 샘플 기반 통합 테스트
+응답 시간 및 분류 정확도 측정
+UI 개선 및 버그 수정
+최종 보고서 작성
+최종 시스템
+성능 보고서
+
+6. 비용 계획 및 보안
+
+
+6.1 예상 비용
+
+항목
+서비스
+비용
+비고
+DB + 파일 저장소
+Supabase Free Tier
+무료
+PostgreSQL 500MB, Storage 1GB
+앱 배포 서버
+Streamlit Community Cloud
+무료
+GitHub 연동, 무제한 배포
+AI 분류·요약 (문서 처리)
+GPT-4o API
+~$0.005 / 문서 1건
+문서 100건 처리 시 약 $0.5
+총 예상 (프로젝트 기간)
+인프라 무료 + OpenAI
+$5 ~ 15 수준
+테스트 포함, 실사용 시 매우 소량
+
+6.2 보안 정책
+API Key 관리: .env는 반드시 .gitignore 추가 / Streamlit Cloud에서는 Secrets 기능으로 관리
+데이터 격리: Supabase Row Level Security(RLS) 활성화, 업로드 데이터 외부 노출 차단
+Zero Data Retention: OpenAI API는 입력 데이터를 학습에 미사용 (ZDR 정책 준수)
+민감 정보: 업로드 전 개인정보(주민번호, 계좌번호 등) 포함 파일 사전 검토 가이드 제공
+
+7. 목표 및 성공 기준
+
+
+7.1 정량적 목표
+
+측정 항목
+목표 기준
+측정 방법
+문서 1건당 처리 시간 (파싱 + GPT 분류 + DB 저장)
+10초 이내
+파일 업로드 후 대시보드 카드 생성까지 시간 측정
+AI 프로젝트·거래처 분류 정확도
+85% 이상
+샘플 문서 50건 수동 검토 후 정답률 산출
+지원 포맷 커버리지
+5종 전부 (.mbox / .json / .pdf / .docx / .txt)
+각 포맷 테스트 파일로 파싱 성공 여부 확인
+대시보드 로딩 시간
+3초 이내
+카드 100건 기준 탭 전환 시간 측정
+
+7.2 정성적 목표
+신규 인수자가 퇴사자 문서를 직접 읽지 않고도 업무 맥락을 파악할 수 있는 수준의 대시보드 완성
+파일 포맷에 무관하게 &apos;폴더째 드래그앤드롭&apos;하면 대시보드가 생성되는 사용자 경험 구현
+Glean 등 엔터프라이즈 솔루션과 동일한 핵심 가치를 무료 인프라로 팀 단위에서 실현
