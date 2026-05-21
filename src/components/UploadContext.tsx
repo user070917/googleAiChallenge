@@ -33,6 +33,7 @@ interface UploadContextType {
   markAsRead: (id: string) => void;
   retryUpload: (id: string) => void;
   retryAllFailed: () => void;
+  addNotification: (message: string, type: 'success' | 'error') => void;
 }
 
 const UploadContext = createContext<UploadContextType | undefined>(undefined);
@@ -230,7 +231,8 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
       clearAllNotifications,
       markAsRead,
       retryUpload,
-      retryAllFailed
+      retryAllFailed,
+      addNotification
     }}>
       {children}
     </UploadContext.Provider>

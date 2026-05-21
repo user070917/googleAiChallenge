@@ -283,3 +283,85 @@ export async function deleteCard(cardId: string, docId?: string): Promise<boolea
     return false;
   }
 }
+
+// ==========================================
+// Email Connection Methods for OAuth
+// ==========================================
+export interface EmailConnection {
+  provider: 'gmail' | 'outlook';
+  email_address: string;
+  refresh_token?: string;
+  created_at: string;
+  last_synced_at?: string;
+}
+
+export async function getEmailConnections(): Promise<EmailConnection[]> {
+  if (supabase) {
+    try {
+      const { data, error } = await supabase.from('email_connections').select('*');
+      if (!error && data) return data;
+    } catch (err) {
+      console.warn('Supabase email_connections table may not exist, falling back to mock storage.');
+    }
+  }
+  
+  if (typeof window !== 'undefined') {
+    const data = localStorage.getItem('mock_email_connections');
+    return data ? JSON.parse(data) : [];
+  }
+  return [];
+}
+
+export async function addEmailConnection(provider: 'gmail' | 'outlook', email_address: string, refresh_token?: string): Promise<boolean> {
+  const newConnection: EmailConnection = {
+    provider,
+    email_address,
+    refresh_token,
+    created_at: new Date().toISOString(),
+    last_synced_at: '방금 전'
+  };
+
+  if (supabase) {
+    try {
+      // First clean up any existing connection for this provider
+      await supabase.from('email_connections').delete().eq('provider', provider);
+      const { error } = await supabase.from('email_connections').insert([newConnection]);
+      if (!error) return true;
+    } catch (err) {
+      console.error('Failed to insert email connection into Supabase:', err);
+    }
+  }
+
+  if (typeof window !== 'undefined') {
+    const data = localStorage.getItem('mock_email_connections');
+    const list: EmailConnection[] = data ? JSON.parse(data) : [];
+    const filtered = list.filter(c => c.provider !== provider);
+    filtered.push(newConnection);
+    localStorage.setItem('mock_email_connections', JSON.stringify(filtered));
+    return true;
+  }
+  return false;
+}
+
+export async function removeEmailConnection(provider: 'gmail' | 'outlook'): Promise<boolean> {
+  if (supabase) {
+    try {
+      const { error } = await supabase.from('email_connections').delete().eq('provider', provider);
+      if (!error) return true;
+    } catch (err) {
+      console.error('Failed to delete email connection from Supabase:', err);
+    }
+  }
+
+  if (typeof window !== 'undefined') {
+    const data = localStorage.getItem('mock_email_connections');
+    if (data) {
+      const list: EmailConnection[] = JSON.parse(data);
+      const filtered = list.filter(c => c.provider !== provider);
+      localStorage.setItem('mock_email_connections', JSON.stringify(filtered));
+      return true;
+    }
+  }
+  return false;
+}
+

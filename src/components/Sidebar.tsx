@@ -50,11 +50,11 @@ export default function Sidebar({ className = '' }: SidebarProps) {
         {/* Logo Section */}
         <div className="p-6 flex items-center justify-between gap-3 border-b border-slate-200/50 dark:border-white/10 transition-colors">
           <div className="flex items-center gap-3">
-            <div className="bg-teal-100 dark:bg-teal-500/20 p-2 rounded-lg border border-teal-200 dark:border-teal-500/30 backdrop-blur-md">
-              <Brain className="w-6 h-6 text-teal-600 dark:text-teal-300 animate-pulse" />
+            <div className="flex items-center justify-center transition-all">
+              <img src="/logo.png" alt="README Logo" className="w-9 h-9 object-contain dark:brightness-0 dark:invert" />
             </div>
             <div>
-              <h1 className="font-bold text-lg tracking-tight text-slate-900 dark:text-white drop-shadow-sm dark:drop-shadow-md">AI 사수</h1>
+              <h1 className="font-bold text-lg tracking-tight text-slate-900 dark:text-white drop-shadow-sm dark:drop-shadow-md">README</h1>
               <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Knowledge Restorer</p>
             </div>
           </div>

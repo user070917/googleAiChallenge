@@ -12,7 +12,8 @@ import {
   User,
   X,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  ChevronDown
 } from 'lucide-react';
 
 import { useTheme } from '@/components/ThemeProvider';
@@ -35,7 +36,9 @@ export default function Header({ title }: HeaderProps) {
 
   const { notifications, clearNotification, clearAllNotifications, markAsRead } = useUploads();
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const userMenuRef = useRef<HTMLDivElement>(null);
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
@@ -47,6 +50,9 @@ export default function Header({ title }: HeaderProps) {
     function handleClickOutside(event: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setShowNotifications(false);
+      }
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setShowUserMenu(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -79,6 +85,7 @@ export default function Header({ title }: HeaderProps) {
   const handleLogout = async () => {
     await fetch('/api/auth/logout', { method: 'POST' });
     setUser(null);
+    setShowUserMenu(false);
     router.push('/login');
     router.refresh();
   };
@@ -195,19 +202,29 @@ export default function Header({ title }: HeaderProps) {
           <div className="h-8 w-px bg-slate-300 dark:bg-white/10 mx-1"></div>
           
           {user ? (
-            <div className="flex items-center gap-1.5 sm:gap-2 p-1.5 pr-2 sm:pr-3.5 rounded-full bg-white/50 dark:bg-white/5 border border-slate-200/50 dark:border-white/5 transition-all shadow-sm dark:shadow-none">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-teal-500 to-blue-500 flex items-center justify-center text-white font-bold text-sm shadow-md flex-shrink-0">
-                {user.name ? user.name[0].toUpperCase() : 'A'}
-              </div>
-              <span className="text-sm font-semibold text-slate-700 dark:text-slate-300 transition-colors hidden sm:inline">{user.name || 'Admin'}</span>
-              <div className="h-4 w-px bg-slate-300 dark:bg-white/10 mx-1 hidden sm:block"></div>
+            <div className="relative" ref={userMenuRef}>
               <button 
-                onClick={handleLogout}
-                className="p-1.5 text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-colors flex items-center justify-center"
-                title="로그아웃"
+                onClick={() => setShowUserMenu(!showUserMenu)}
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-slate-800/80 border border-slate-200/50 dark:border-white/5 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-all shadow-sm dark:shadow-none font-semibold text-sm whitespace-nowrap"
+                title="사용자 메뉴"
               >
-                <LogOut className="w-4 h-4" />
+                <span>{(user.name || 'Admin')}님</span>
+                <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-200 flex-shrink-0 ${showUserMenu ? 'rotate-180' : ''}`} />
               </button>
+              
+              {showUserMenu && (
+                <div className="absolute left-0 right-0 mt-2 bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl border border-slate-200/50 dark:border-white/10 rounded-xl shadow-xl z-50 overflow-hidden transition-all duration-300 transform origin-top whitespace-nowrap min-w-full">
+                  <div className="p-1">
+                    <button 
+                      onClick={handleLogout}
+                      className="w-full flex items-center justify-center gap-1.5 px-2 py-2 text-sm text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-colors font-bold whitespace-nowrap"
+                    >
+                      <LogOut className="w-4 h-4 flex-shrink-0" />
+                      <span>로그아웃</span>
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <button 

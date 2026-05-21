@@ -6,7 +6,7 @@ import { SidebarProvider } from "@/components/SidebarContext";
 import { UploadProvider } from "@/components/UploadContext";
 
 export const metadata: Metadata = {
-  title: "AI 사수 - 퇴사자 자동 인수인계 대시보드",
+  title: "README - 퇴사자 자동 인수인계 대시보드",
   description: "퇴사자가 남긴 문서와 데이터로부터 AI 기반 자동 인수인계 대시보드를 생성합니다.",
 };
 

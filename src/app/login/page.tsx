@@ -48,10 +48,10 @@ export default function LoginPage() {
       <div className="w-full max-w-md bg-white/60 dark:bg-white/5 backdrop-blur-2xl border border-slate-200/50 dark:border-white/10 rounded-3xl p-6 sm:p-10 shadow-xl dark:shadow-[0_8px_32px_rgba(0,0,0,0.4)] relative z-10 transition-colors">
         
         <div className="flex flex-col items-center mb-6 sm:mb-10">
-          <div className="w-14 h-14 sm:w-16 sm:h-16 bg-teal-100 dark:bg-teal-500/20 rounded-2xl flex items-center justify-center border border-teal-200 dark:border-teal-500/30 mb-4 sm:mb-5 shadow-sm dark:shadow-[0_0_15px_rgba(45,212,191,0.2)] transition-colors">
-            <Brain className="w-7 h-7 sm:w-8 sm:h-8 text-teal-600 dark:text-teal-400 drop-shadow-sm dark:drop-shadow-md" />
+          <div className="mb-4 sm:mb-5 flex items-center justify-center transition-all">
+            <img src="/logo.png" alt="README Logo" className="w-16 h-16 sm:w-20 sm:h-20 object-contain dark:brightness-0 dark:invert" />
           </div>
-          <h1 className="text-xl sm:text-2xl font-black text-slate-800 dark:text-white drop-shadow-sm transition-colors">AI 사수 시작하기</h1>
+          <h1 className="text-xl sm:text-2xl font-black text-slate-800 dark:text-white drop-shadow-sm transition-colors">README 시작하기</h1>
           <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm mt-2 text-center font-medium transition-colors">
             이메일과 비밀번호를 입력하여 접속하세요.<br/>
             <span className="text-[10px] sm:text-[11px] text-teal-600/80 dark:text-teal-400/80 font-bold">(Salt + Pepper 암호화 적용됨)</span>
