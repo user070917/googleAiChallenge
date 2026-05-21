@@ -15,7 +15,12 @@ import {
   X,
   ArrowRight,
   ExternalLink,
-  Trash2
+  Trash2,
+  Filter,
+  Clock,
+  Briefcase,
+  Building2,
+  RotateCcw
 } from 'lucide-react';
 import Header from '@/components/Header';
 import { getCards, getDocuments, deleteCard, clearDatabase, Card, Document } from '@/lib/db';
@@ -28,6 +33,12 @@ export default function DashboardPage() {
   const [copied, setCopied] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [isClearing, setIsClearing] = useState(false);
+
+  // Filtering states
+  const [selectedSource, setSelectedSource] = useState<string>('all');
+  const [selectedProject, setSelectedProject] = useState<string>('all');
+  const [selectedClient, setSelectedClient] = useState<string>('all');
+  const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
 
   const handleClearAll = async () => {
     if (cards.length === 0 && documents.length === 0) {
@@ -101,7 +112,28 @@ export default function DashboardPage() {
   // File/Document attachment source types
   const docAttachmentCount = cards.filter(c => c.source_type === 'pdf' || c.source_type === 'docx' || c.source_type === 'txt').length;
 
-  const timelineCards = [...cards].sort((a, b) => new Date(b.event_date).getTime() - new Date(a.event_date).getTime());
+  // Extract unique projects and clients for the dropdowns
+  const uniqueProjects = Array.from(new Set(cards.map(c => c.project).filter(Boolean)));
+  const uniqueClients = Array.from(new Set(cards.map(c => c.client).filter(Boolean)));
+
+  // Source type counts
+  const getSourceCount = (type: string) => {
+    if (type === 'all') return cards.length;
+    return cards.filter(c => c.source_type === type).length;
+  };
+
+  const filteredCards = cards.filter(c => {
+    if (selectedSource !== 'all' && c.source_type !== selectedSource) return false;
+    if (selectedProject !== 'all' && c.project !== selectedProject) return false;
+    if (selectedClient !== 'all' && c.client !== selectedClient) return false;
+    return true;
+  });
+
+  const timelineCards = [...filteredCards].sort((a, b) => {
+    const dateA = new Date(a.event_date).getTime();
+    const dateB = new Date(b.event_date).getTime();
+    return sortOrder === 'newest' ? dateB - dateA : dateA - dateB;
+  });
 
   const getSourceIcon = (type: string) => {
     switch(type) {
@@ -246,12 +278,143 @@ export default function DashboardPage() {
 
         {/* Content Area - Glassmorphism */}
         <div className="bg-white/60 dark:bg-white/5 backdrop-blur-2xl border border-slate-200/50 dark:border-white/10 rounded-3xl shadow-sm dark:shadow-[0_8px_32px_rgba(0,0,0,0.2)] overflow-hidden flex flex-col min-h-[400px] sm:min-h-[600px] transition-colors">
-          <div className="px-6 py-5 border-b border-slate-200/50 dark:border-white/10 bg-slate-100/50 dark:bg-black/10 transition-colors">
+          <div className="px-6 py-5 border-b border-slate-200/50 dark:border-white/10 bg-slate-100/50 dark:bg-black/10 transition-colors flex justify-between items-center flex-wrap gap-2">
             <h2 className="text-base sm:text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
               <Database className="w-5 h-5 text-teal-600 dark:text-teal-400" />
-              인수인계 요약 및 분석 기록 (일자순)
+              인수인계 요약 및 분석 기록
             </h2>
+            {totalCards > 0 && (
+              <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-white/5 px-2.5 py-1 rounded-full border border-slate-200/50 dark:border-white/5">
+                총 {totalCards}건 중 {filteredCards.length}건 표시됨
+              </span>
+            )}
           </div>
+
+          {/* Filters Control Panel */}
+          {totalCards > 0 && (
+            <div className="p-4 sm:p-6 border-b border-slate-200/50 dark:border-white/10 bg-slate-50/50 dark:bg-white/5 transition-colors space-y-4">
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                {/* Source Type Pills */}
+                <div className="flex flex-wrap gap-2 items-center">
+                  <span className="text-xs font-bold text-slate-400 dark:text-slate-500 mr-2 flex items-center gap-1">
+                    <Filter className="w-3.5 h-3.5" /> 구분:
+                  </span>
+                  
+                  {[
+                    { id: 'all', label: '전체', icon: <Database className="w-3.5 h-3.5" /> },
+                    { id: 'email', label: '이메일', icon: <Mail className="w-3.5 h-3.5" /> },
+                    { id: 'slack', label: '슬랙', icon: <MessageSquare className="w-3.5 h-3.5" /> },
+                    { id: 'pdf', label: 'PDF', icon: <FileText className="w-3.5 h-3.5" /> },
+                    { id: 'docx', label: 'DOCX', icon: <FileText className="w-3.5 h-3.5" /> },
+                    { id: 'txt', label: 'TXT', icon: <FileText className="w-3.5 h-3.5" /> },
+                  ].map(type => {
+                    const count = getSourceCount(type.id);
+                    const isActive = selectedSource === type.id;
+                    return (
+                      <button
+                        key={type.id}
+                        onClick={() => setSelectedSource(type.id)}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all cursor-pointer ${
+                          isActive
+                            ? 'bg-teal-500 text-white border-teal-500 shadow-[0_2px_10px_rgba(20,184,166,0.3)] dark:shadow-[0_0_15px_rgba(45,212,191,0.4)]'
+                            : 'bg-white/60 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300 border-slate-200/50 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'
+                        }`}
+                      >
+                        {type.icon}
+                        <span>{type.label}</span>
+                        <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                          isActive 
+                            ? 'bg-white/20 text-white' 
+                            : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
+                        }`}>{count}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Sort Order */}
+                <div className="flex items-center gap-2 self-end lg:self-auto">
+                  <span className="text-xs font-bold text-slate-400 dark:text-slate-500 flex items-center gap-1">
+                    <Clock className="w-3.5 h-3.5" /> 정렬:
+                  </span>
+                  <div className="inline-flex rounded-xl bg-slate-100 dark:bg-slate-800 p-0.5 border border-slate-200/50 dark:border-white/10 shadow-inner">
+                    <button
+                      onClick={() => setSortOrder('newest')}
+                      className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                        sortOrder === 'newest'
+                          ? 'bg-white dark:bg-slate-700 text-slate-800 dark:text-white shadow-sm'
+                          : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+                      }`}
+                    >
+                      최신순
+                    </button>
+                    <button
+                      onClick={() => setSortOrder('oldest')}
+                      className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                        sortOrder === 'oldest'
+                          ? 'bg-white dark:bg-slate-700 text-slate-800 dark:text-white shadow-sm'
+                          : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+                      }`}
+                    >
+                      과거순
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Project & Client filters */}
+              <div className="flex flex-col sm:flex-row gap-4">
+                {/* Project Filter */}
+                <div className="flex-1 flex flex-col gap-1.5">
+                  <label className="text-xs font-bold text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                    <Briefcase className="w-3.5 h-3.5 text-teal-500" /> 프로젝트
+                  </label>
+                  <select
+                    value={selectedProject}
+                    onChange={(e) => setSelectedProject(e.target.value)}
+                    className="w-full px-3 py-2 bg-white/60 dark:bg-slate-800/80 border border-slate-200/50 dark:border-white/10 rounded-xl text-xs sm:text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500/50 backdrop-blur-md transition-all shadow-sm cursor-pointer"
+                  >
+                    <option value="all">전체 프로젝트 ({uniqueProjects.length}개)</option>
+                    {uniqueProjects.map(proj => (
+                      <option key={proj} value={proj}>{proj}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Client Filter */}
+                <div className="flex-1 flex flex-col gap-1.5">
+                  <label className="text-xs font-bold text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                    <Building2 className="w-3.5 h-3.5 text-blue-500" /> 거래처 (클라이언트)
+                  </label>
+                  <select
+                    value={selectedClient}
+                    onChange={(e) => setSelectedClient(e.target.value)}
+                    className="w-full px-3 py-2 bg-white/60 dark:bg-slate-800/80 border border-slate-200/50 dark:border-white/10 rounded-xl text-xs sm:text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500/50 backdrop-blur-md transition-all shadow-sm cursor-pointer"
+                  >
+                    <option value="all">전체 거래처 ({uniqueClients.length}개)</option>
+                    {uniqueClients.map(client => (
+                      <option key={client} value={client}>{client}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Reset Button */}
+                {(selectedSource !== 'all' || selectedProject !== 'all' || selectedClient !== 'all') && (
+                  <button
+                    onClick={() => {
+                      setSelectedSource('all');
+                      setSelectedProject('all');
+                      setSelectedClient('all');
+                    }}
+                    className="sm:self-end flex items-center justify-center gap-1.5 px-4 py-2 border border-rose-200 dark:border-rose-500/20 bg-rose-50 dark:bg-rose-500/10 hover:bg-rose-100 dark:hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-bold rounded-xl shadow-sm transition-all hover:-translate-y-0.5 cursor-pointer h-[38px] w-full sm:w-auto"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                    <span>필터 초기화</span>
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Tab Content */}
           <div className="p-4 sm:p-8 flex-1 bg-white/40 dark:bg-black/10 transition-colors">
@@ -260,6 +423,23 @@ export default function DashboardPage() {
                 <Database className="w-16 h-16 mb-4 opacity-20" />
                 <p>아직 분석된 인수인계 데이터가 없습니다.</p>
                 <a href="/uploads" className="mt-4 text-teal-600 dark:text-teal-400 hover:text-teal-700 dark:hover:text-teal-300 hover:underline text-sm font-semibold transition-colors">새로운 파일 업로드하기</a>
+              </div>
+            ) : timelineCards.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full text-slate-400 dark:text-slate-500 py-20">
+                <Database className="w-16 h-16 mb-4 opacity-20" />
+                <p className="font-medium text-slate-600 dark:text-slate-400">일치하는 분석 기록이 없습니다.</p>
+                <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">필터 조건을 완화해 보거나 아래 버튼을 눌러 필터를 초기화해 보세요.</p>
+                <button
+                  onClick={() => {
+                    setSelectedSource('all');
+                    setSelectedProject('all');
+                    setSelectedClient('all');
+                  }}
+                  className="mt-4 px-4 py-2 bg-teal-500 hover:bg-teal-400 text-white dark:text-teal-950 font-bold rounded-xl text-xs shadow-sm transition-all hover:-translate-y-0.5 cursor-pointer flex items-center gap-1.5"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  <span>필터 초기화</span>
+                </button>
               </div>
             ) : (
               <div className="relative pl-6 sm:pl-8 border-l-2 border-slate-200 dark:border-white/10 space-y-8 sm:space-y-12 ml-2 sm:ml-6 py-4 transition-colors">

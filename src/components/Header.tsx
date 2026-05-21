@@ -4,7 +4,6 @@ import React, { useEffect, useState, useRef } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { 
   Bell, 
-  Search, 
   Sun,
   Moon,
   Menu,
@@ -102,15 +101,7 @@ export default function Header({ title }: HeaderProps) {
       </div>
 
       <div className="flex items-center gap-4 md:gap-6 flex-shrink-0">
-        {/* Search Bar (Glassmorphic) */}
-        <div className="relative group hidden md:block">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 dark:text-slate-400 group-focus-within:text-teal-600 dark:group-focus-within:text-teal-400 transition-colors" />
-          <input 
-            type="text" 
-            placeholder="인수인계 내용 검색..." 
-            className="w-64 pl-10 pr-4 py-2 bg-white/50 dark:bg-white/5 border border-slate-300/50 dark:border-white/10 rounded-full text-sm text-slate-800 dark:text-slate-200 placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:bg-white/80 dark:focus:bg-white/10 transition-all backdrop-blur-md shadow-sm dark:shadow-none"
-          />
-        </div>
+
 
         {/* Action Buttons */}
         <div className="flex items-center gap-2 sm:gap-3">
