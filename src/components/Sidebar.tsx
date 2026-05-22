@@ -44,9 +44,9 @@ export default function Sidebar({ className = '' }: SidebarProps) {
       )}
 
       {/* Sidebar Panel */}
-      <aside className={`fixed inset-y-0 left-0 w-64 z-50 lg:sticky lg:top-0 lg:h-screen lg:flex-shrink-0 lg:flex flex flex-col bg-white/95 dark:bg-slate-900/95 lg:bg-white/60 lg:dark:bg-slate-900/40 backdrop-blur-2xl text-slate-800 dark:text-slate-200 border-r border-slate-200/50 dark:border-white/10 shadow-[4px_0_24px_rgba(0,0,0,0.05)] dark:shadow-[4px_0_24px_rgba(0,0,0,0.2)] transition-all duration-300 ${
-        isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
-      } ${className}`}>
+      <aside className={`fixed inset-y-0 left-0 w-64 z-50 lg:sticky lg:top-0 lg:h-screen lg:flex-shrink-0 flex flex-col bg-white/95 dark:bg-slate-900/95 lg:bg-white/60 lg:dark:bg-slate-900/40 backdrop-blur-2xl text-slate-800 dark:text-slate-200 border-r border-slate-200/50 dark:border-white/10 shadow-[4px_0_24px_rgba(0,0,0,0.05)] dark:shadow-[4px_0_24px_rgba(0,0,0,0.2)] transition-transform duration-300 ${
+        isOpen ? 'translate-x-0' : '-translate-x-full'
+      } lg:translate-x-0 ${className}`}>
         {/* Logo Section */}
         <div className="p-6 flex items-center justify-between gap-3 border-b border-slate-200/50 dark:border-white/10 transition-colors">
           <div className="flex items-center gap-3">
