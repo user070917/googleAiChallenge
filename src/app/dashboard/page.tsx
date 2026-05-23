@@ -23,7 +23,7 @@ import {
   RotateCcw
 } from 'lucide-react';
 import Header from '@/components/Header';
-import { getCards, getDocuments, deleteCard, clearDatabase, Card, Document } from '@/lib/db';
+import { getCards, getDocuments, deleteCard, Card, Document } from '@/lib/db';
 
 export default function DashboardPage() {
   const [cards, setCards] = useState<Card[]>([]);
@@ -52,25 +52,17 @@ export default function DashboardPage() {
 
     setIsClearing(true);
     try {
-      // 1. Delete all physical files on the server disk
-      const filesToDelete = documents.map(d => `${d.id}_${d.file_name}`);
-      for (const fileName of filesToDelete) {
-        try {
-          await fetch(`/api/files/${encodeURIComponent(fileName)}`, {
-            method: 'DELETE',
-          });
-        } catch (err) {
-          console.error(`Failed to delete physical file: ${fileName}`, err);
-        }
+      // 서버 사이드 API를 통해 service_role key로 RLS 우회 삭제
+      const res = await fetch('/api/clear', { method: 'DELETE' });
+      const result = await res.json();
+
+      if (!res.ok) {
+        console.error('서버 삭제 오류:', result.error);
+        alert('삭제 중 오류가 발생했습니다: ' + (result.error || '알 수 없는 오류'));
+        return;
       }
 
-      // 2. Clear from database
-      const ok = await clearDatabase();
-      if (!ok) {
-        alert('데이터베이스 비우기 중 일부 오류가 발생했습니다.');
-      }
-
-      // 3. Clear local UI state
+      // 로컬 UI 상태 초기화
       setCards([]);
       setDocuments([]);
     } catch (err) {

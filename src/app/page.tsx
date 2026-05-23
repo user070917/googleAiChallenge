@@ -36,10 +36,10 @@ export default function HomePage() {
               프로젝트와 거래처별로 인수인계 대시보드를 자동 생성합니다.
             </p>
             
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 pt-2 sm:pt-4">
+            <div className="flex flex-col xl:flex-row items-stretch xl:items-center gap-3 pt-2 sm:pt-4">
               <Link 
                 href="/uploads"
-                className="flex items-center justify-center gap-2 px-6 py-3.5 sm:px-8 sm:py-4 bg-teal-500 hover:bg-teal-400 text-white dark:text-teal-950 font-black rounded-2xl transition-all shadow-[0_4px_20px_rgba(20,184,166,0.3)] hover:shadow-[0_4px_30px_rgba(20,184,166,0.4)] transform hover:-translate-y-1 backdrop-blur-md border border-teal-400/50 text-center"
+                className="flex items-center justify-center gap-2 px-6 py-3.5 bg-teal-500 hover:bg-teal-400 text-white dark:text-teal-950 font-black rounded-2xl transition-all shadow-[0_4px_20px_rgba(20,184,166,0.3)] hover:shadow-[0_4px_30px_rgba(20,184,166,0.4)] transform hover:-translate-y-1 backdrop-blur-md border border-teal-400/50 text-center whitespace-nowrap"
               >
                 <UploadCloud className="w-5 h-5 stroke-[2.5] flex-shrink-0" />
                 <span>지금 바로 업로드하기</span>
@@ -47,7 +47,7 @@ export default function HomePage() {
               
               <Link 
                 href="/dashboard"
-                className="flex items-center justify-center gap-2 px-6 py-3.5 sm:px-8 sm:py-4 bg-white/80 dark:bg-white/5 hover:bg-white dark:hover:bg-white/10 border border-slate-200 dark:border-white/20 text-slate-800 dark:text-white font-bold rounded-2xl transition-all backdrop-blur-xl shadow-lg hover:-translate-y-1 text-center"
+                className="flex items-center justify-center gap-2 px-6 py-3.5 bg-white/80 dark:bg-white/5 hover:bg-white dark:hover:bg-white/10 border border-slate-200 dark:border-white/20 text-slate-800 dark:text-white font-bold rounded-2xl transition-all backdrop-blur-xl shadow-lg hover:-translate-y-1 text-center whitespace-nowrap"
               >
                 <LayoutDashboard className="w-5 h-5 flex-shrink-0" />
                 <span>대시보드 둘러보기</span>
@@ -64,34 +64,34 @@ export default function HomePage() {
             {/* Node System */}
             <div className="relative w-full h-full p-4 sm:p-8 flex flex-col justify-between">
               
-              <div className="flex justify-between items-center w-full px-2 sm:px-10 mt-2 sm:mt-0">
-                <div className="flex flex-col items-center gap-2">
-                  <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-white/50 dark:bg-black/40 border border-slate-200/50 dark:border-white/10 flex items-center justify-center shadow-sm dark:shadow-inner relative z-10 backdrop-blur-md transition-colors flex-shrink-0">
-                    <FileText className="w-6 h-6 sm:w-8 sm:h-8 text-slate-500 dark:text-slate-300" />
+              <div className="flex justify-between items-center w-full px-1 sm:px-4 xl:px-10 mt-2 sm:mt-0">
+                <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 xl:w-16 xl:h-16 rounded-2xl bg-white/50 dark:bg-black/40 border border-slate-200/50 dark:border-white/10 flex items-center justify-center shadow-sm dark:shadow-inner relative z-10 backdrop-blur-md transition-colors">
+                    <FileText className="w-5 h-5 sm:w-6 sm:h-6 xl:w-8 xl:h-8 text-slate-500 dark:text-slate-300" />
                   </div>
-                  <span className="text-[10px] sm:text-xs font-bold text-slate-500 dark:text-slate-400">Raw Data</span>
+                  <span className="text-[9px] sm:text-[10px] font-bold text-slate-500 dark:text-slate-400 whitespace-nowrap">Raw Data</span>
                 </div>
 
-                <div className="flex-1 h-0.5 bg-gradient-to-r from-slate-300 dark:from-slate-500/30 via-teal-500/50 to-teal-500 relative transition-colors">
-                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-teal-400 shadow-[0_0_10px_#2dd4bf] animate-ping"></div>
+                <div className="flex-1 min-w-0 h-0.5 bg-gradient-to-r from-slate-300 dark:from-slate-500/30 via-teal-500/50 to-teal-500 relative transition-colors mx-1 sm:mx-2">
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-teal-400 shadow-[0_0_10px_#2dd4bf] animate-ping"></div>
                 </div>
 
-                <div className="flex flex-col items-center gap-2">
-                  <div className="w-14 h-14 sm:w-20 sm:h-20 rounded-3xl bg-teal-100/50 dark:bg-teal-500/20 border border-teal-200 dark:border-teal-500/50 flex items-center justify-center shadow-[0_0_20px_rgba(45,212,191,0.2)] dark:shadow-[0_0_30px_rgba(45,212,191,0.2)] relative z-10 backdrop-blur-lg transition-colors flex-shrink-0">
-                    <Brain className="w-7 h-7 sm:w-10 sm:h-10 text-teal-600 dark:text-teal-300 animate-pulse" />
+                <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
+                  <div className="w-12 h-12 sm:w-14 sm:h-14 xl:w-20 xl:h-20 rounded-3xl bg-teal-100/50 dark:bg-teal-500/20 border border-teal-200 dark:border-teal-500/50 flex items-center justify-center shadow-[0_0_20px_rgba(45,212,191,0.2)] dark:shadow-[0_0_30px_rgba(45,212,191,0.2)] relative z-10 backdrop-blur-lg transition-colors">
+                    <Brain className="w-6 h-6 sm:w-7 sm:h-7 xl:w-10 xl:h-10 text-teal-600 dark:text-teal-300 animate-pulse" />
                   </div>
-                  <span className="text-[10px] sm:text-xs font-bold text-teal-600 dark:text-teal-400">GPT Engine</span>
+                  <span className="text-[9px] sm:text-[10px] font-bold text-teal-600 dark:text-teal-400 whitespace-nowrap">GPT Engine</span>
                 </div>
 
-                <div className="flex-1 h-0.5 bg-gradient-to-r from-teal-500 via-blue-400/50 dark:via-blue-500/50 to-blue-300 dark:to-blue-500/30 relative transition-colors">
-                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-blue-500 dark:bg-blue-400 shadow-[0_0_10px_#60a5fa] animate-ping" style={{ animationDelay: '0.5s' }}></div>
+                <div className="flex-1 min-w-0 h-0.5 bg-gradient-to-r from-teal-500 via-blue-400/50 dark:via-blue-500/50 to-blue-300 dark:to-blue-500/30 relative transition-colors mx-1 sm:mx-2">
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-blue-500 dark:bg-blue-400 shadow-[0_0_10px_#60a5fa] animate-ping" style={{ animationDelay: '0.5s' }}></div>
                 </div>
 
-                <div className="flex flex-col items-center gap-2">
-                  <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-blue-100/50 dark:bg-blue-500/20 border border-blue-200 dark:border-blue-500/40 flex items-center justify-center shadow-[0_0_15px_rgba(59,130,246,0.1)] dark:shadow-[0_0_20px_rgba(59,130,246,0.2)] relative z-10 backdrop-blur-md transition-colors flex-shrink-0">
-                    <Server className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600 dark:text-blue-400" />
+                <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 xl:w-16 xl:h-16 rounded-2xl bg-blue-100/50 dark:bg-blue-500/20 border border-blue-200 dark:border-blue-500/40 flex items-center justify-center shadow-[0_0_15px_rgba(59,130,246,0.1)] dark:shadow-[0_0_20px_rgba(59,130,246,0.2)] relative z-10 backdrop-blur-md transition-colors">
+                    <Server className="w-5 h-5 sm:w-6 sm:h-6 xl:w-8 xl:h-8 text-blue-600 dark:text-blue-400" />
                   </div>
-                  <span className="text-[10px] sm:text-xs font-bold text-blue-600 dark:text-blue-400">Supabase</span>
+                  <span className="text-[9px] sm:text-[10px] font-bold text-blue-600 dark:text-blue-400 whitespace-nowrap">Supabase</span>
                 </div>
               </div>
 
