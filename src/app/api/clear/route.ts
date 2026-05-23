@@ -44,18 +44,30 @@ export async function DELETE() {
       return NextResponse.json({ error: 'documents 삭제 실패: ' + docErr.message }, { status: 500 });
     }
 
-    // 4. 디스크의 업로드 파일도 함께 삭제
-    const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
+    // 4. Supabase Storage 파일도 삭제
     if (docs && docs.length > 0) {
+      try {
+        const storageFiles = docs.map(doc => `${doc.id}_${doc.file_name}`);
+        const { error: storageError } = await adminSupabase.storage
+          .from('uploads')
+          .remove(storageFiles);
+        if (storageError) {
+          console.error('Storage 삭제 오류:', storageError.message);
+        }
+      } catch (storageErr) {
+        console.error('Storage 삭제 실패:', storageErr);
+      }
+
+      // 5. 로컬 디스크 파일도 삭제 (로컬 개발 환경)
+      const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
       for (const doc of docs) {
         const filePath = path.join(uploadsDir, `${doc.id}_${doc.file_name}`);
         try {
           if (fs.existsSync(filePath)) {
             fs.unlinkSync(filePath);
-            console.log(`파일 삭제 완료: ${filePath}`);
           }
         } catch (fileErr) {
-          console.error(`파일 삭제 실패: ${filePath}`, fileErr);
+          console.error(`로컬 파일 삭제 실패: ${filePath}`, fileErr);
         }
       }
     }

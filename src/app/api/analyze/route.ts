@@ -226,20 +226,36 @@ JSON 형식:
       savedDocId = crypto.randomUUID();
     }
 
-    // Save physical file - use /tmp on Vercel (serverless), public/uploads locally
+    // Save file to Supabase Storage (works on Vercel) OR local disk (local dev)
     try {
       const isVercel = process.env.VERCEL === '1';
-      const uploadDir = isVercel
-        ? '/tmp/uploads'
-        : path.join(process.cwd(), 'public', 'uploads');
-      if (!fs.existsSync(uploadDir)) {
-        fs.mkdirSync(uploadDir, { recursive: true });
-      }
       const savedFileName = `${savedDocId}_${fileName}`;
-      const filePath = path.join(uploadDir, savedFileName);
-      fs.writeFileSync(filePath, buffer);
+
+      if (isVercel && activeSupabaseUrl) {
+        // Vercel: upload to Supabase Storage
+        const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || activeSupabaseKey;
+        const adminSupabase = createClient(activeSupabaseUrl, serviceRoleKey, {
+          auth: { persistSession: false }
+        });
+        const { error: storageError } = await adminSupabase.storage
+          .from('uploads')
+          .upload(savedFileName, buffer, {
+            contentType: 'application/octet-stream',
+            upsert: true
+          });
+        if (storageError) {
+          console.error('Supabase Storage upload error:', storageError.message);
+        } else {
+          console.log(`File uploaded to Supabase Storage: ${savedFileName}`);
+        }
+      } else {
+        // Local dev: save to public/uploads
+        const uploadDir = path.join(process.cwd(), 'public', 'uploads');
+        if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+        fs.writeFileSync(path.join(uploadDir, savedFileName), buffer);
+      }
     } catch (err) {
-      console.error('Failed to save file physically:', err);
+      console.error('Failed to save file:', err);
     }
 
     return NextResponse.json({
