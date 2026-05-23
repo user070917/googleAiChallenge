@@ -321,9 +321,15 @@ function renderDocxPreviewPage(filename: string): string {
           });
         })
         .catch(err => {
-          </a>
-        \`;
-      }
+          console.error(err);
+          loadingView.style.display = 'none';
+          container.innerHTML = \`
+            <div style="padding: 40px; text-align: center; color: var(--text-primary);">
+              <p style="font-size: 16px; font-weight: 600; margin-bottom: 8px;">파일을 불러오는데 실패했습니다.</p>
+              <p style="font-size: 13px; color: var(--text-secondary);">\${err.message || err}</p>
+            </div>
+          \`;
+        });
     });
   </script>
 
