@@ -373,9 +373,42 @@ function getMockLLMResponse(fileName: string, rawContent: string) {
 • [진행 중인 사항 및 잔여 이슈]: 다국어 패키지(next-intl) 이식 및 동적 라우팅 최적화 작업이 진행 중입니다. 모바일 반응형 뷰에서 일부 그리드 깨짐 현상이 보고되었으며, 배포 전 CSS 링킹 확인이 필요합니다.
 • [후임자 인수 지침 및 리소스]: 다음 담당자는 src/components 폴더에 분리된 컴포넌트들의 Tailwind v4 마이그레이션 로그를 참조해야 합니다. 개발 스테이징 환경 배포 스크립트(npm run deploy:staging) 및 AWS Amplify 연동 권한은 인프라 담당 부서에 기안 신청하십시오.`;
   } else {
-    summary = `• [완료된 주요 업무]: 업로드된 문서 "${fileName}" 내용을 기반으로 기초 텍스트 파싱을 완료하여 프로젝트 기본 메타데이터 구조를 형성했습니다.
+    // 만약 파일 내에 텍스트가 존재한다면 파싱된 문맥을 반영하여 동적 summary 생성
+    if (rawContent && rawContent.trim().length > 10) {
+      // 텍스트에서 개행이나 마침표를 기준으로 유의미한 줄들을 분리
+      const lines = rawContent
+        .split(/[.\n]/)
+        .map(l => l.trim())
+        .filter(l => l.length > 12 && !l.includes('[') && !l.includes(']'));
+
+      let workDesc = '';
+      let issueDesc = '';
+      let guideDesc = '';
+
+      if (lines.length >= 1) {
+        workDesc = `• [완료된 주요 업무]: 문서 "${fileName}"에서 파싱된 핵심 데이터인 "${lines[0]}" 사안을 정리하고 관련 업무 인계를 검토 완료했습니다.`;
+      } else {
+        workDesc = `• [완료된 주요 업무]: 업로드된 "${fileName}" 내의 구조화된 업무 텍스트 정보 파싱을 바탕으로 인수 인계 기본 요소를 정의했습니다.`;
+      }
+
+      if (lines.length >= 2) {
+        issueDesc = `• [진행 중인 사항 및 잔여 이슈]: 본문 내 "${lines[1] || '후속 조치 일정'}"에 기술된 마일스톤의 세부 진척 상황을 지속 검토 중입니다.`;
+      } else {
+        issueDesc = `• [진행 중인 사항 및 잔여 이슈]: 본문의 맥락 분석을 통해 잔여 미결 사안 조율 및 후속 체크리스트 구성을 대기 중입니다.`;
+      }
+
+      if (lines.length >= 3) {
+        guideDesc = `• [후임자 인수 지침 및 리소스]: 후임자는 기술 사양서에 명시된 "${lines[2] || '시스템 연동 히스토리'}" 관련 구체적 정보 및 설정 가이드를 필히 참조하십시오.`;
+      } else {
+        guideDesc = `• [후임자 인수 지침 및 리소스]: 상세 인수 히스토리는 본 카드에 연계된 원본 문서의 텍스트 미리보기 모드 전체 내용을 상세 정독하십시오.`;
+      }
+
+      summary = `${workDesc}\n${issueDesc}\n${guideDesc}`;
+    } else {
+      summary = `• [완료된 주요 업무]: 업로드된 문서 "${fileName}" 내용을 기반으로 기초 텍스트 파싱을 완료하여 프로젝트 기본 메타데이터 구조를 형성했습니다.
 • [진행 중인 사항 및 잔여 이슈]: 업무 마일스톤 및 핵심 관련자(Stakeholders) 대화 목록의 연관 관계 추출이 진행 중이며, 미확정된 개발 일정 및 연락망의 유효성 검증이 요구됩니다.
 • [후임자 인수 지침 및 리소스]: 본 카드에 연계된 원본 데이터 파일의 텍스트 원본을 'documents' 스키마 테이블에서 조회하여 세부 기술 요약 스펙을 보강하십시오.`;
+    }
   }
 
   return {

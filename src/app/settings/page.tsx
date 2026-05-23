@@ -231,65 +231,23 @@ export default function SettingsPage() {
             ) : (
               <div className="space-y-4">
                 {/* Gmail Sync Card */}
-                {connections.some(c => c.provider === 'gmail') ? (
-                  connections.filter(c => c.provider === 'gmail').map(conn => (
-                    <div key={conn.provider} className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-5 bg-white/80 dark:bg-black/25 rounded-2xl border border-teal-200/80 dark:border-teal-500/20 shadow-sm transition-all hover:bg-white dark:hover:bg-white/5">
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-full bg-teal-50 dark:bg-teal-500/10 flex items-center justify-center border border-teal-200 dark:border-teal-500/30 flex-shrink-0">
-                          <Mail className="w-6 h-6 text-teal-600 dark:text-teal-400" />
-                        </div>
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-bold text-slate-800 dark:text-white">Google Gmail 연동 완료</span>
-                            <span className="flex items-center gap-1 text-[10px] text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-200/50 dark:border-emerald-500/10 font-bold">
-                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                              동기화 활성화
-                            </span>
-                          </div>
-                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 select-all">{conn.email_address}</p>
-                          <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1">마지막 동기화: {conn.last_synced_at || '기록 없음'}</p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2 self-stretch md:self-auto justify-end">
-                        <button
-                          onClick={handleGmailSync}
-                          disabled={isSyncing}
-                          className="flex-1 md:flex-initial flex items-center justify-center gap-1.5 px-4 py-2.5 bg-teal-500 hover:bg-teal-400 text-white dark:text-teal-950 text-xs font-bold rounded-xl shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-                        >
-                          {isSyncing ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <RotateCw className="w-3.5 h-3.5" />}
-                          <span>{isSyncing ? '동기화 중...' : '지금 동기화'}</span>
-                        </button>
-                        <button
-                          onClick={handleGmailDisconnect}
-                          className="flex-1 md:flex-initial flex items-center justify-center gap-1.5 px-4 py-2.5 bg-white dark:bg-white/10 hover:bg-rose-50 dark:hover:bg-rose-500/10 border border-slate-200/20 text-slate-700 dark:text-slate-200 hover:text-rose-600 dark:hover:text-rose-400 text-xs font-bold rounded-xl transition-all cursor-pointer"
-                        >
-                          <Unlink className="w-3.5 h-3.5" />
-                          <span>연동 해제</span>
-                        </button>
-                      </div>
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-5 bg-slate-100/30 dark:bg-black/10 rounded-2xl border border-slate-200/30 dark:border-white/5 opacity-60">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center border border-slate-200/10 dark:border-slate-700/50 flex-shrink-0">
+                      <Mail className="w-6 h-6 text-slate-300 dark:text-slate-600" />
                     </div>
-                  ))
-                ) : (
-                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-5 bg-white/80 dark:bg-black/20 rounded-2xl border border-slate-200/50 dark:border-white/5 shadow-sm transition-colors">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center border border-slate-200 dark:border-slate-700 flex-shrink-0">
-                        <Mail className="w-6 h-6 text-slate-400 dark:text-slate-500" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold text-slate-800 dark:text-white">Google Gmail 연동</p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">인수/인계 메일을 실시간 수집 및 분석할 수 있습니다.</p>
-                      </div>
+                    <div>
+                      <p className="text-sm font-bold text-slate-800 dark:text-white">Google Gmail 연동</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Google Gmail 이메일 계정을 연동합니다. (준비 중)</p>
                     </div>
-                    <button
-                      onClick={handleGmailLink}
-                      className="flex items-center justify-center gap-1.5 px-4 py-2.5 bg-white hover:bg-slate-50 dark:bg-white/10 dark:hover:bg-white/20 border border-slate-200 dark:border-white/25 text-slate-700 dark:text-slate-200 text-xs font-bold rounded-xl shadow-sm transition-all hover:-translate-y-0.5 cursor-pointer w-full md:w-auto"
-                    >
-                      <Link2 className="w-3.5 h-3.5 text-teal-500" />
-                      <span>Google 계정 연동</span>
-                    </button>
                   </div>
-                )}
+                  <button
+                    disabled
+                    className="flex items-center justify-center gap-1.5 px-4 py-2.5 bg-slate-100 dark:bg-slate-800 border border-slate-200/20 text-slate-400 dark:text-slate-600 text-xs font-bold rounded-xl cursor-not-allowed w-full md:w-auto"
+                  >
+                    <span>지원 예정</span>
+                  </button>
+                </div>
 
                 {/* Outlook Sync Card */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-5 bg-slate-100/30 dark:bg-black/10 rounded-2xl border border-slate-200/30 dark:border-white/5 opacity-60">

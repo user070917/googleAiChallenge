@@ -145,7 +145,7 @@ export default function UploadsPage() {
             <UploadCloud className="w-8 h-8 sm:w-10 sm:h-10 text-teal-500 dark:text-teal-400 drop-shadow-[0_0_5px_rgba(20,184,166,0.3)] dark:drop-shadow-[0_0_10px_rgba(45,212,191,0.5)]" />
           </div>
           <h3 className="text-base sm:text-xl font-bold text-slate-800 dark:text-white mb-1 sm:mb-2 drop-shadow-sm transition-colors">여기에 파일을 놓거나 브라우저에서 선택하세요</h3>
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium transition-colors">최대 파일 크기: 50MB</p>
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium transition-colors">최대 파일 크기: 5MB</p>
         </div>
 
         {/* Uploads List - Glassmorphism */}
