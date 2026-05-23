@@ -27,216 +27,207 @@ function renderDocxPreviewPage(filename: string): string {
   <title>${filename} - 미리보기</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
   <style>
+    /* ─── Light mode defaults ─── */
     :root {
-      --bg-color: #f8fafc;
-      --paper-bg: #ffffff;
+      --bg-color: #f1f5f9;
+      --chrome-bg: rgba(255,255,255,0.85);
       --text-primary: #1e293b;
       --text-secondary: #64748b;
       --border-color: #e2e8f0;
       --primary-color: #14b8a6;
       --primary-hover: #0d9488;
-    }
-    
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --bg-color: #0f172a;
-        --paper-bg: #1e293b;
-        --text-primary: #f8fafc;
-        --text-secondary: #94a3b8;
-        --border-color: #334155;
-        --primary-color: #2dd4bf;
-        --primary-hover: #14b8a6;
-      }
+      --shadow-doc: 0 4px 24px rgba(0,0,0,0.08);
     }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
+    /* ─── Dark mode: only the outer shell changes ─── */
+    html.dark {
+      --bg-color: #0f172a;
+      --chrome-bg: rgba(15,23,42,0.88);
+      --text-primary: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --border-color: #1e293b;
+      --primary-color: #2dd4bf;
+      --primary-hover: #14b8a6;
+      --shadow-doc: 0 4px 24px rgba(0,0,0,0.4);
     }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
       font-family: 'Inter', 'Noto Sans KR', sans-serif;
       background-color: var(--bg-color);
       color: var(--text-primary);
-      line-height: 1.6;
-      padding: 80px 20px 40px;
+      padding: 80px 20px 60px;
       display: flex;
       flex-direction: column;
       align-items: center;
       min-height: 100vh;
-      transition: background-color 0.3s;
+      transition: background-color 0.25s, color 0.25s;
     }
 
-    /* Top Navigation bar */
+    /* ── Top chrome bar ── */
     .top-bar {
       position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 64px;
-      background-color: rgba(255, 255, 255, 0.8);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
+      top: 0; left: 0; right: 0;
+      height: 60px;
+      background-color: var(--chrome-bg);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
       border-bottom: 1px solid var(--border-color);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0 24px;
-      z-index: 100;
-    }
-    
-    @media (prefers-color-scheme: dark) {
-      .top-bar {
-        background-color: rgba(15, 23, 42, 0.8);
-      }
+      padding: 0 20px;
+      z-index: 200;
+      transition: background-color 0.25s, border-color 0.25s;
     }
 
     .doc-info {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
       min-width: 0;
+      flex: 1;
+      margin-right: 16px;
     }
 
     .doc-icon {
+      flex-shrink: 0;
       background-color: #2563eb;
-      color: white;
-      padding: 6px 10px;
-      border-radius: 8px;
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
+      color: #fff;
+      padding: 5px 9px;
+      border-radius: 7px;
+      font-size: 10px;
+      font-weight: 800;
       letter-spacing: 0.5px;
     }
 
     .doc-title {
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 700;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      color: var(--text-primary);
+      transition: color 0.25s;
+    }
+
+    .bar-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    /* Theme toggle button */
+    .theme-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      background: transparent;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 16px;
+    }
+    .theme-btn:hover {
+      background: var(--border-color);
       color: var(--text-primary);
     }
 
     .download-btn {
       display: inline-flex;
       align-items: center;
-      gap: 8px;
+      gap: 7px;
       background-color: var(--primary-color);
       color: #0f172a;
       font-weight: 700;
-      font-size: 13px;
-      padding: 10px 18px;
-      border-radius: 10px;
+      font-size: 12px;
+      padding: 9px 15px;
+      border-radius: 9px;
       text-decoration: none;
       transition: all 0.2s ease;
-      box-shadow: 0 4px 12px rgba(20, 184, 166, 0.25);
+      box-shadow: 0 3px 10px rgba(20,184,166,0.25);
+      white-space: nowrap;
     }
-
-    @media (prefers-color-scheme: dark) {
-      .download-btn {
-        color: #0f172a;
-        box-shadow: 0 4px 12px rgba(45, 212, 191, 0.2);
-      }
-    }
-
     .download-btn:hover {
       background-color: var(--primary-hover);
       transform: translateY(-1px);
     }
+    .download-btn svg { width: 14px; height: 14px; }
 
-    .download-btn svg {
-      width: 16px;
-      height: 16px;
-    }
-
-    /* Content Container */
+    /* ── Document render area ── */
     #document-container {
       width: 100%;
-      max-width: 900px;
+      max-width: 960px;
       margin: 0 auto;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 20px;
-      z-index: 10;
     }
 
-    /* Loading Overlay */
+    /* Loading state */
     .loading-container {
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      background-color: var(--paper-bg);
+      background-color: #ffffff;
       border: 1px solid var(--border-color);
-      border-radius: 16px;
+      border-radius: 14px;
       padding: 60px 40px;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+      box-shadow: var(--shadow-doc);
       width: 100%;
-      max-width: 800px;
       text-align: center;
-      margin-top: 40px;
+      margin-top: 20px;
+      transition: border-color 0.25s;
     }
+    html.dark .loading-container { background-color: #1e293b; }
 
     .spinner {
-      width: 48px;
-      height: 48px;
+      width: 44px; height: 44px;
       border: 4px solid var(--border-color);
       border-top-color: var(--primary-color);
       border-radius: 50%;
-      animation: spin 1s linear infinite;
-      margin-bottom: 20px;
+      animation: spin 0.9s linear infinite;
+      margin-bottom: 18px;
     }
-
     @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
+      to { transform: rotate(360deg); }
     }
-
     .loading-text {
-      font-size: 16px;
-      font-weight: 600;
+      font-size: 15px; font-weight: 600;
       color: var(--text-primary);
-      margin-bottom: 8px;
+      margin-bottom: 6px;
     }
-
     .loading-subtext {
-      font-size: 13px;
+      font-size: 12px;
       color: var(--text-secondary);
     }
 
-    /* docx-preview styling overrides */
+    /* ── docx-preview outer wrapper overrides ──
+       IMPORTANT: We do NOT force any colors inside .docx pages.
+       The document pages remain white so Word formatting (incl. tables)
+       is always readable exactly as intended. */
     .docx-wrapper {
       background-color: transparent !important;
-      padding: 0 !important;
-      width: 100% !important;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 24px;
+      padding: 20px 0 !important;
+      gap: 20px !important;
     }
 
+    /* Each page gets a subtle shadow; content colors are untouched */
     .docx {
-      background-color: var(--paper-bg) !important;
-      border: 1px solid var(--border-color) !important;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04) !important;
-      border-radius: 12px !important;
-      color: var(--text-primary) !important;
-      margin: 0 !important;
-      transition: all 0.3s;
+      box-shadow: var(--shadow-doc) !important;
+      border-radius: 4px !important;
+      margin: 0 auto !important;
     }
 
-    /* Dark mode overrides for docx elements */
-    @media (prefers-color-scheme: dark) {
-      .docx {
-        background-color: #1e293b !important;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2) !important;
-      }
-      .docx p, .docx span, .docx td, .docx th, .docx h1, .docx h2, .docx h3, .docx h4 {
-        color: #f8fafc !important;
-      }
+    /* In dark mode, add a very slight dimming ring so white pages feel comfortable,
+       but DO NOT change any text or background colors inside the page */
+    html.dark .docx {
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.06), 0 8px 32px rgba(0,0,0,0.5) !important;
+      filter: brightness(0.96);
     }
   </style>
 </head>
@@ -247,70 +238,89 @@ function renderDocxPreviewPage(filename: string): string {
       <span class="doc-icon">DOCX</span>
       <span class="doc-title">${filename}</span>
     </div>
-    <a href="?download=true" class="download-btn">
-      <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
-      </svg>
-      <span>원본 파일 다운로드</span>
-    </a>
+    <div class="bar-actions">
+      <button class="theme-btn" id="theme-toggle" title="라이트/다크 모드 전환" aria-label="테마 전환">
+        <span id="theme-icon">☀️</span>
+      </button>
+      <a href="?download=true" class="download-btn">
+        <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5
+               M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/>
+        </svg>
+        <span>원본 다운로드</span>
+      </a>
+    </div>
   </div>
 
   <div id="document-container">
     <div class="loading-container" id="loading-view">
       <div class="spinner"></div>
-      <p class="loading-text">문서 원본 불러오는 중...</p>
-      <p class="loading-subtext">DOCX 파일을 브라우저 뷰어에 렌더링하고 있습니다.</p>
+      <p class="loading-text">문서 원본 불러오는 중…</p>
+      <p class="loading-subtext">DOCX 파일을 브라우저에서 렌더링하고 있습니다.</p>
     </div>
   </div>
 
-  <!-- Scripts for client-side rendering -->
   <script src="https://unpkg.com/jszip/dist/jszip.min.js"></script>
   <script src="https://unpkg.com/docx-preview/dist/docx-preview.js"></script>
-  
-  <script>
-    document.addEventListener("DOMContentLoaded", function() {
-      const container = document.getElementById("document-container");
-      const loadingView = document.getElementById("loading-view");
 
-      fetch("?download=true")
-        .then(response => {
-          if (!response.ok) {
-            throw new Error("파일 다운로드에 실패했습니다. (HTTP " + response.status + ")");
-          }
-          return response.blob();
+  <script>
+    // ── Theme detection & toggle ──────────────────────────────────────────
+    const html = document.documentElement;
+    const themeIcon = document.getElementById('theme-icon');
+    const themeBtn  = document.getElementById('theme-toggle');
+
+    // Detect OS/app preference at load time
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    let isDark = prefersDark;
+    applyTheme(isDark);
+
+    // Keep in sync if the user changes OS setting while the tab is open
+    window.matchMedia('(prefers-color-scheme: dark)')
+      .addEventListener('change', e => {
+        isDark = e.matches;
+        applyTheme(isDark);
+      });
+
+    themeBtn.addEventListener('click', () => {
+      isDark = !isDark;
+      applyTheme(isDark);
+    });
+
+    function applyTheme(dark) {
+      if (dark) {
+        html.classList.add('dark');
+        themeIcon.textContent = '🌙';
+      } else {
+        html.classList.remove('dark');
+        themeIcon.textContent = '☀️';
+      }
+    }
+
+    // ── DOCX rendering ───────────────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', function () {
+      const container   = document.getElementById('document-container');
+      const loadingView = document.getElementById('loading-view');
+
+      fetch('?download=true')
+        .then(res => {
+          if (!res.ok) throw new Error('파일 다운로드에 실패했습니다. (HTTP ' + res.status + ')');
+          return res.blob();
         })
         .then(blob => {
-          // Hide loading
-          loadingView.style.display = "none";
-          
-          // Render DOCX asynchronously
-          docx.renderAsync(blob, container, null, {
-            className: "docx",
+          loadingView.style.display = 'none';
+          return docx.renderAsync(blob, container, null, {
+            className: 'docx',
             inWrapper: true,
             ignoreWidth: false,
             ignoreHeight: false,
             breakPages: true,
             trimXmlDeclaration: true,
+            useBase64URL: true,
             debug: false
-          }).catch(renderErr => {
-            console.error("docx render error:", renderErr);
-            showError("문서 렌더링에 실패했습니다: " + renderErr.message);
           });
         })
         .catch(err => {
-          console.error("fetch docx error:", err);
-          showError(err.message);
-        });
-
-      function showError(msg) {
-        loadingView.innerHTML = \`
-          <h2 style="color: #e11d48; margin-bottom: 12px; font-size: 18px;">문서를 불러올 수 없습니다.</h2>
-          <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: 24px;">\${msg}</p>
-          <a href="?download=true" class="download-btn" style="box-shadow: none;">
-            <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
-            </svg>
-            <span>원본 파일 강제 다운로드</span>
           </a>
         \`;
       }
