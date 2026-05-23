@@ -230,6 +230,8 @@ JSON 형식:
     try {
       const isVercel = process.env.VERCEL === '1';
       const savedFileName = `${savedDocId}_${fileName}`;
+      // Define a safe ASCII-only storage key for Supabase Storage to avoid InvalidKey errors
+      const storageKey = `${savedDocId}.${fileExtension}`;
 
       if (isVercel && activeSupabaseUrl) {
         // Vercel: upload to Supabase Storage
@@ -239,14 +241,14 @@ JSON 형식:
         });
         const { error: storageError } = await adminSupabase.storage
           .from('uploads')
-          .upload(savedFileName, buffer, {
+          .upload(storageKey, buffer, {
             contentType: 'application/octet-stream',
             upsert: true
           });
         if (storageError) {
           console.error('Supabase Storage upload error:', storageError.message);
         } else {
-          console.log(`File uploaded to Supabase Storage: ${savedFileName}`);
+          console.log(`File uploaded to Supabase Storage: ${storageKey}`);
         }
       } else {
         // Local dev: save to public/uploads
