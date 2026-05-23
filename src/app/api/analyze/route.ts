@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 // @ts-ignore
 import mammoth from 'mammoth';
-import { PDFParse } from 'pdf-parse/node';
+import { PDFParse } from 'pdf-parse';
 import path from 'path';
 import fs from 'fs';
 import crypto from 'crypto';
