@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { 
   FileText, 
   Mail, 
@@ -73,16 +74,52 @@ export default function DashboardPage() {
     }
   };
 
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const router = useRouter();
+
+  const formatUploadDate = (isoString: string | undefined, fallback: string) => {
+    if (!isoString) return fallback;
+    try {
+      const date = new Date(isoString);
+      if (isNaN(date.getTime())) return fallback;
+      const yyyy = date.getFullYear();
+      const mm = String(date.getMonth() + 1).padStart(2, '0');
+      const dd = String(date.getDate()).padStart(2, '0');
+      return `${yyyy}-${mm}-${dd}`;
+    } catch {
+      return fallback;
+    }
+  };
+
   useEffect(() => {
     async function loadData() {
-      const fetchedCards = await getCards();
-      const fetchedDocs = await getDocuments();
-      setCards(fetchedCards);
-      setDocuments(fetchedDocs);
-      setIsLoading(false);
+      try {
+        const res = await fetch('/api/auth/me');
+        if (!res.ok) {
+          router.push('/login');
+          return;
+        }
+        const authData = await res.json();
+        if (!authData.authenticated || !authData.user) {
+          router.push('/login');
+          return;
+        }
+        setCurrentUser(authData.user);
+        const userId = authData.user.userId;
+
+        const fetchedCards = await getCards(userId);
+        const fetchedDocs = await getDocuments(userId);
+        setCards(fetchedCards);
+        setDocuments(fetchedDocs);
+      } catch (err) {
+        console.error('Failed to load dashboard data:', err);
+        router.push('/login');
+      } finally {
+        setIsLoading(false);
+      }
     }
     loadData();
-  }, []);
+  }, [router]);
 
   if (isLoading) {
     return (
@@ -122,8 +159,8 @@ export default function DashboardPage() {
   });
 
   const timelineCards = [...filteredCards].sort((a, b) => {
-    const dateA = new Date(a.event_date).getTime();
-    const dateB = new Date(b.event_date).getTime();
+    const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+    const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
     return sortOrder === 'newest' ? dateB - dateA : dateA - dateB;
   });
 
@@ -449,9 +486,9 @@ export default function DashboardPage() {
                         {/* Header metadata row */}
                         <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
                           <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                            <span className="font-mono font-bold text-[10px] sm:text-xs text-teal-700 dark:text-teal-300 bg-teal-50 dark:bg-teal-500/10 px-2 py-0.5 sm:px-2 sm:py-1 rounded-md border border-teal-100 dark:border-teal-500/20 flex items-center gap-1">
+                            <span className="font-mono font-bold text-[10px] sm:text-xs text-teal-700 dark:text-teal-300 bg-teal-50 dark:bg-teal-500/10 px-2 py-0.5 sm:px-2 sm:py-1 rounded-md border border-teal-100 dark:border-teal-500/20 flex items-center gap-1" title="업로드 날짜">
                               <Calendar className="w-3.5 h-3.5" />
-                              {c.event_date}
+                              {formatUploadDate(c.created_at, c.event_date)}
                             </span>
                             <ArrowRight className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 flex-shrink-0" />
                             <span className="font-bold text-slate-800 dark:text-white text-sm sm:text-base md:text-lg select-all">

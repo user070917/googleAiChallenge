@@ -121,6 +121,20 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
 
     const live = isLiveMode();
 
+    // Get current logged-in user id for scoping mock data
+    let currentUserId: string | undefined = undefined;
+    try {
+      const userRes = await fetch('/api/auth/me');
+      if (userRes.ok) {
+        const userData = await userRes.json();
+        if (userData.authenticated && userData.user) {
+          currentUserId = userData.user.userId;
+        }
+      }
+    } catch (e) {
+      console.error('Failed to check user session on client upload', e);
+    }
+
     while (true) {
       // Find the first queued file using ref to avoid closure issues
       const item = uploadsRef.current.find(u => u.status === 'queued');
@@ -152,7 +166,8 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
               data.file_name,
               data.source_type,
               data.raw_content || `[Simulated Content for ${data.file_name}]\nThis content was parsed locally.`,
-              data.doc_id
+              data.doc_id,
+              currentUserId
             );
             await addCard({
               project: data.project,
@@ -160,7 +175,8 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
               event_date: data.event_date,
               summary: data.summary,
               source_type: data.source_type,
-              doc_id: doc.id
+              doc_id: doc.id,
+              user_id: currentUserId
             });
           }
 

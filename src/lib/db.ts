@@ -31,6 +31,7 @@ export interface Document {
   file_name: string;
   source_type: 'email' | 'slack' | 'docx' | 'pdf' | 'txt';
   raw_content: string;
+  user_id?: string;
 }
 
 export interface Card {
@@ -42,6 +43,7 @@ export interface Card {
   summary: string;
   source_type: string;
   doc_id?: string;
+  user_id?: string;
 }
 
 // ==========================================
@@ -145,29 +147,46 @@ const saveMockData = (data: any) => {
 // ==========================================
 // API Methods
 // ==========================================
-export async function getDocuments(): Promise<Document[]> {
+export async function getDocuments(userId?: string): Promise<Document[]> {
   if (supabase) {
-    const { data, error } = await supabase.from('documents').select('*').order('created_at', { ascending: false });
+    let query = supabase.from('documents').select('*');
+    if (userId) {
+      query = query.eq('user_id', userId);
+    }
+    const { data, error } = await query.order('created_at', { ascending: false });
     if (error) console.error('Error fetching documents:', error);
     return data || [];
   }
-  return getMockData().documents;
+  const docs = getMockData().documents;
+  if (userId) {
+    return docs.filter(d => d.user_id === userId);
+  }
+  return docs;
 }
 
-export async function getCards(): Promise<Card[]> {
+export async function getCards(userId?: string): Promise<Card[]> {
   if (supabase) {
-    const { data, error } = await supabase.from('cards').select('*').order('created_at', { ascending: false });
+    let query = supabase.from('cards').select('*');
+    if (userId) {
+      query = query.eq('user_id', userId);
+    }
+    const { data, error } = await query.order('created_at', { ascending: false });
     if (error) console.error('Error fetching cards:', error);
     return data || [];
   }
-  return getMockData().cards;
+  const cards = getMockData().cards;
+  if (userId) {
+    return cards.filter(c => c.user_id === userId);
+  }
+  return cards;
 }
 
-export async function addDocument(file_name: string, source_type: Document['source_type'], raw_content: string, id?: string): Promise<Document> {
+export async function addDocument(file_name: string, source_type: Document['source_type'], raw_content: string, id?: string, userId?: string): Promise<Document> {
   const newDoc = {
     file_name,
     source_type,
-    raw_content
+    raw_content,
+    user_id: userId
   };
 
   if (supabase) {
@@ -187,7 +206,7 @@ export async function addDocument(file_name: string, source_type: Document['sour
   return doc as Document;
 }
 
-export async function addCard(cardData: Omit<Card, 'id' | 'created_at'>): Promise<Card> {
+export async function addCard(cardData: Omit<Card, 'id' | 'created_at'> & { user_id?: string }): Promise<Card> {
   if (supabase) {
     const { data, error } = await supabase.from('cards').insert([cardData]).select().single();
     if (error) {
@@ -364,4 +383,3 @@ export async function removeEmailConnection(provider: 'gmail' | 'outlook'): Prom
   }
   return false;
 }
-

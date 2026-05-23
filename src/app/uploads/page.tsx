@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
   UploadCloud, 
@@ -23,6 +23,33 @@ import { useUploads } from '@/components/UploadContext';
 export default function UploadsPage() {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+
+  useEffect(() => {
+    async function checkAuth() {
+      try {
+        const res = await fetch('/api/auth/me');
+        if (!res.ok) {
+          router.push('/login');
+          return;
+        }
+        const authData = await res.json();
+        if (!authData.authenticated || !authData.user) {
+          router.push('/login');
+          return;
+        }
+        setCurrentUser(authData.user);
+      } catch (err) {
+        console.error('Session verification failed on uploads page:', err);
+        router.push('/login');
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    checkAuth();
+  }, [router]);
+
   const { 
     uploads, 
     isProcessing, 
@@ -60,6 +87,17 @@ export default function UploadsPage() {
   const hasCompleted = uploads.some(u => u.status === 'completed');
   const hasFailed = uploads.some(u => u.status === 'error');
   const isFinished = uploads.length > 0 && !isProcessing && !uploads.some(u => u.status === 'queued' || u.status === 'analyzing');
+
+  if (isLoading) {
+    return (
+      <main className="flex-1 flex flex-col min-h-screen relative z-10 transition-colors duration-500">
+        <Header title="업로드 (Upload Queue)" />
+        <div className="flex-1 flex items-center justify-center">
+          <Loader2 className="w-10 h-10 text-teal-600 dark:text-teal-400 animate-spin" />
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="flex-1 flex flex-col min-h-screen relative z-10 transition-colors duration-500">

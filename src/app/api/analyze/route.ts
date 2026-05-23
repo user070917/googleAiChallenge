@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
 import { createClient } from '@supabase/supabase-js';
 // @ts-ignore
 import mammoth from 'mammoth';
@@ -28,6 +29,17 @@ const getSupabaseKey = () => process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
 export async function POST(req: NextRequest) {
   try {
+    const cookieStore = await cookies();
+    const sessionCookie = cookieStore.get('auth_session');
+    let userId: string | null = null;
+    if (sessionCookie && sessionCookie.value) {
+      try {
+        const userData = JSON.parse(sessionCookie.value);
+        userId = userData.userId || null;
+      } catch (err) {
+        console.error('Failed to parse auth_session cookie in analyze route:', err);
+      }
+    }
     const formData = await req.formData();
     const file = formData.get('file') as File | null;
 
@@ -187,7 +199,7 @@ JSON 형식:
         
         const { data: docData, error: docError } = await supabase
           .from('documents')
-          .insert([{ file_name: fileName, source_type: sourceType, raw_content: rawContent }])
+          .insert([{ file_name: fileName, source_type: sourceType, raw_content: rawContent, user_id: userId }])
           .select()
           .single();
         
@@ -207,7 +219,8 @@ JSON 형식:
               event_date,
               summary,
               source_type: sourceType,
-              doc_id: savedDocId
+              doc_id: savedDocId,
+              user_id: userId
             }]);
             
           if (cardError) {
@@ -270,7 +283,8 @@ JSON 형식:
         event_date,
         summary,
         raw_content: rawContent,
-        doc_id: savedDocId
+        doc_id: savedDocId,
+        user_id: userId
       }
     });
 
