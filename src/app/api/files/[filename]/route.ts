@@ -2,8 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import fs from 'fs';
 import path from 'path';
-// @ts-ignore
-import mammoth from 'mammoth';
 
 function getStorageKey(filename: string): string {
   const underscoreIndex = filename.indexOf('_');
@@ -19,13 +17,8 @@ function getStorageKey(filename: string): string {
   return filename;
 }
 
-async function renderDocxToHtml(buffer: Buffer, filename: string): Promise<string> {
-  try {
-    const result = await mammoth.convertToHtml({ buffer });
-    const bodyHtml = result.value || '<p>문서가 비어있습니다.</p>';
-    
-    // Create a beautiful premium styled preview page
-    const styledHtml = `
+function renderDocxPreviewPage(filename: string): string {
+  return `
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -69,7 +62,8 @@ async function renderDocxToHtml(buffer: Buffer, filename: string): Promise<strin
       line-height: 1.6;
       padding: 80px 20px 40px;
       display: flex;
-      justify-content: center;
+      flex-direction: column;
+      align-items: center;
       min-height: 100vh;
       transition: background-color 0.3s;
     }
@@ -158,76 +152,91 @@ async function renderDocxToHtml(buffer: Buffer, filename: string): Promise<strin
     }
 
     /* Content Container */
-    .document-container {
+    #document-container {
+      width: 100%;
+      max-width: 900px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      z-index: 10;
+    }
+
+    /* Loading Overlay */
+    .loading-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
       background-color: var(--paper-bg);
       border: 1px solid var(--border-color);
       border-radius: 16px;
+      padding: 60px 40px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
       width: 100%;
       max-width: 800px;
-      padding: 48px;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
-      min-height: calc(100vh - 140px);
+      text-align: center;
+      margin-top: 40px;
     }
 
-    @media (max-width: 768px) {
-      body {
-        padding-top: 72px;
-      }
-      .document-container {
-        padding: 24px;
-        border-radius: 12px;
-      }
+    .spinner {
+      width: 48px;
+      height: 48px;
+      border: 4px solid var(--border-color);
+      border-top-color: var(--primary-color);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 20px;
     }
 
-    /* Converted DOCX HTML Styles */
-    .document-container h1, 
-    .document-container h2, 
-    .document-container h3, 
-    .document-container h4 {
-      margin-top: 1.5em;
-      margin-bottom: 0.5em;
-      font-weight: 700;
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .loading-text {
+      font-size: 16px;
+      font-weight: 600;
       color: var(--text-primary);
+      margin-bottom: 8px;
     }
 
-    .document-container h1 { font-size: 28px; border-bottom: 2px solid var(--border-color); padding-bottom: 8px; margin-top: 0; }
-    .document-container h2 { font-size: 22px; }
-    .document-container h3 { font-size: 18px; }
-
-    .document-container p {
-      margin-bottom: 1em;
-      color: var(--text-primary);
-      font-size: 15px;
-      font-weight: 400;
+    .loading-subtext {
+      font-size: 13px;
+      color: var(--text-secondary);
     }
 
-    .document-container ul, 
-    .document-container ol {
-      margin-bottom: 1em;
-      padding-left: 24px;
+    /* docx-preview styling overrides */
+    .docx-wrapper {
+      background-color: transparent !important;
+      padding: 0 !important;
+      width: 100% !important;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 24px;
     }
 
-    .document-container li {
-      margin-bottom: 0.5em;
+    .docx {
+      background-color: var(--paper-bg) !important;
+      border: 1px solid var(--border-color) !important;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04) !important;
+      border-radius: 12px !important;
+      color: var(--text-primary) !important;
+      margin: 0 !important;
+      transition: all 0.3s;
     }
 
-    .document-container table {
-      width: 100%;
-      border-collapse: collapse;
-      margin: 1.5em 0;
-      font-size: 14px;
-    }
-
-    .document-container th, 
-    .document-container td {
-      border: 1px solid var(--border-color);
-      padding: 10px 12px;
-      text-align: left;
-    }
-
-    .document-container th {
-      background-color: var(--bg-color);
-      font-weight: 700;
+    /* Dark mode overrides for docx elements */
+    @media (prefers-color-scheme: dark) {
+      .docx {
+        background-color: #1e293b !important;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2) !important;
+      }
+      .docx p, .docx span, .docx td, .docx th, .docx h1, .docx h2, .docx h3, .docx h4 {
+        color: #f8fafc !important;
+      }
     }
   </style>
 </head>
@@ -246,24 +255,71 @@ async function renderDocxToHtml(buffer: Buffer, filename: string): Promise<strin
     </a>
   </div>
 
-  <div class="document-container">
-    ${bodyHtml}
+  <div id="document-container">
+    <div class="loading-container" id="loading-view">
+      <div class="spinner"></div>
+      <p class="loading-text">문서 원본 불러오는 중...</p>
+      <p class="loading-subtext">DOCX 파일을 브라우저 뷰어에 렌더링하고 있습니다.</p>
+    </div>
   </div>
+
+  <!-- Scripts for client-side rendering -->
+  <script src="https://unpkg.com/jszip/dist/jszip.min.js"></script>
+  <script src="https://unpkg.com/docx-preview/dist/docx-preview.js"></script>
+  
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      const container = document.getElementById("document-container");
+      const loadingView = document.getElementById("loading-view");
+
+      fetch("?download=true")
+        .then(response => {
+          if (!response.ok) {
+            throw new Error("파일 다운로드에 실패했습니다. (HTTP " + response.status + ")");
+          }
+          return response.blob();
+        })
+        .then(blob => {
+          // Hide loading
+          loadingView.style.display = "none";
+          
+          // Render DOCX asynchronously
+          docx.renderAsync(blob, container, null, {
+            className: "docx",
+            inWrapper: true,
+            ignoreWidth: false,
+            ignoreHeight: false,
+            breakPages: true,
+            trimXmlDeclaration: true,
+            debug: false
+          }).catch(renderErr => {
+            console.error("docx render error:", renderErr);
+            showError("문서 렌더링에 실패했습니다: " + renderErr.message);
+          });
+        })
+        .catch(err => {
+          console.error("fetch docx error:", err);
+          showError(err.message);
+        });
+
+      function showError(msg) {
+        loadingView.innerHTML = \`
+          <h2 style="color: #e11d48; margin-bottom: 12px; font-size: 18px;">문서를 불러올 수 없습니다.</h2>
+          <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: 24px;">\${msg}</p>
+          <a href="?download=true" class="download-btn" style="box-shadow: none;">
+            <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
+            </svg>
+            <span>원본 파일 강제 다운로드</span>
+          </a>
+        \`;
+      }
+    });
+  </script>
 
 </body>
 </html>
-    `;
-    return styledHtml;
-  } catch (err: any) {
-    console.error('Error rendering docx to html:', err);
-    return `
-      <div style="padding: 40px; font-family: sans-serif; text-align: center; background: #fff; max-width: 500px; margin: 50px auto; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
-        <h2 style="color: #e11d48; margin-bottom: 10px;">DOCX 렌더링에 실패했습니다.</h2>
-        <p style="color: #64748b; margin-bottom: 20px;">${err.message}</p>
-        <a href="?download=true" style="display: inline-block; padding: 10px 20px; background: #14b8a6; color: white; text-decoration: none; border-radius: 8px; font-weight: bold;">원본 파일 다운로드</a>
-      </div>
-    `;
-  }
+`;
 }
 
 export async function GET(
@@ -334,9 +390,9 @@ export async function GET(
         const lowerName = decodedFilename.toLowerCase();
         const isRealDocx = fileBuffer.length >= 2 && fileBuffer.slice(0, 2).toString('utf-8') === 'PK';
 
-        // Render DOCX as HTML if it's not a direct download request
+        // Render DOCX using client-side docx-preview HTML page if not a direct download request
         if (lowerName.endsWith('.docx') && isRealDocx && !isDownload) {
-          const htmlContent = await renderDocxToHtml(fileBuffer, decodedFilename);
+          const htmlContent = renderDocxPreviewPage(decodedFilename);
           return new NextResponse(htmlContent, {
             headers: {
               'Content-Type': 'text/html; charset=utf-8',
@@ -396,9 +452,9 @@ export async function GET(
         const lowerName = decodedFilename.toLowerCase();
         const isRealDocx = fileBuffer.length >= 2 && fileBuffer.slice(0, 2).toString('utf-8') === 'PK';
 
-        // Render DOCX as HTML if it's not a direct download request
+        // Render DOCX using client-side docx-preview HTML page if not a direct download request
         if (lowerName.endsWith('.docx') && isRealDocx && !isDownload) {
-          const htmlContent = await renderDocxToHtml(fileBuffer, decodedFilename);
+          const htmlContent = renderDocxPreviewPage(decodedFilename);
           return new NextResponse(htmlContent, {
             headers: {
               'Content-Type': 'text/html; charset=utf-8',
