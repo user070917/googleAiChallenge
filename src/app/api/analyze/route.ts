@@ -17,40 +17,18 @@ try {
   console.error('Failed to set PDF worker path:', err);
 }
 
-// Create public/uploads directory and write default mock files if they don't exist
+// Vercel 서버리스 환경에서는 /tmp만 쓰기 가능
+// public/uploads 초기화는 로컬 개발 환경에서만 수행
 try {
-  const uploadDir = path.join(process.cwd(), 'public', 'uploads');
-  if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-  }
-
-  const defaultMockFiles = [
-    {
-      name: 'doc-1_영업_이메일_백업.mbox',
-      content: 'From: manager@solutionsinc.com\nTo: team@solutionsinc.com\nSubject: 2분기 영업 타겟 및 계약 갱신 현황\nDate: Sun, 10 May 2026 14:22:00 +0900\n\n안녕하세요. 영업팀입니다.\n\n2분기 영업 타겟 거래처 리스트 분석이 완료되었습니다. 주요 조율 사항은 아래와 같습니다.\n- 솔루션즈아이엔씨 유지보수 계약 갱신 조건 최종 조율 진행\n- 하반기 신규 매출 15% 성장을 위한 파트너십 구축 계획 수립 완료\n\n세부 내용은 첨부파일을 확인해 주세요.'
-    },
-    {
-      name: 'doc-2_개발팀_슬랙_기록.json',
-      content: '[\n  {\n    "user": "dev_lead",\n    "ts": "2026-05-15 10:30:15",\n    "text": "스마트팩토리 IoT 센서 데이터 수집 서버 구축 완료 및 통신 테스트에 성공했습니다."\n  },\n  {\n    "user": "designer",\n    "ts": "2026-05-15 11:15:22",\n    "text": "대시보드 화면 1차 피드백 반영하여 UI 편의성 대폭 개선했습니다."\n  },\n  {\n    "user": "pm",\n    "ts": "2026-05-15 14:00:00",\n    "text": "좋습니다. 6월 초 공장 시험 가동을 위해 5월 25일까지 사전 점검 완료해 주세요."\n  }\n]'
-    },
-    {
-      name: 'doc-3_보안_패치_가이드.pdf',
-      content: '[보안 패치 및 가이드라인 문서]\n\n1. 방화벽 패치 버전 2.0 배포가 완료되었으며 주요 보안 취약점 사전 패치가 적용되었습니다.\n2. 거래처 요청 사항인 실시간 차단 모니터링 모듈이 추가 구현되었습니다.\n3. 다음주 월요일부터 실운영 환경 배포 및 배포 이후 24시간 동안 이상 여부 모니터링을 진행할 예정입니다.'
-    },
-    {
-      name: 'doc-4_마이그레이션_기획서.docx',
-      content: '개발 과제: 프론트엔드 Next.js 마이그레이션 기획 및 완료 보고서\n\n- 전체 마이그레이션 공정이 성공적으로 완료되었습니다.\n- Lighthouse 성능 지표 측정 결과, 기존 렌더링 성능 대비 약 40%가 향상된 것을 검증하였습니다.\n- 최종 코드베이스에 대한 거래처(테크네트웍스) 최종 소스코드 검수 및 피드백을 대기 중입니다.'
-    }
-  ];
-
-  for (const file of defaultMockFiles) {
-    const filePath = path.join(uploadDir, file.name);
-    if (!fs.existsSync(filePath)) {
-      fs.writeFileSync(filePath, file.content, 'utf-8');
+  const isVercel = process.env.VERCEL === '1';
+  if (!isVercel) {
+    const uploadDir = path.join(process.cwd(), 'public', 'uploads');
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
     }
   }
 } catch (err) {
-  console.error('Failed to initialize default mock files:', err);
+  console.error('Failed to initialize uploads directory:', err);
 }
 
 // Setup OpenAI and Supabase configurations directly from process.env
@@ -256,9 +234,12 @@ JSON 형식:
       savedDocId = crypto.randomUUID();
     }
 
-    // Save physical file to public/uploads folder so it can be opened/downloaded directly
+    // Save physical file - use /tmp on Vercel (serverless), public/uploads locally
     try {
-      const uploadDir = path.join(process.cwd(), 'public', 'uploads');
+      const isVercel = process.env.VERCEL === '1';
+      const uploadDir = isVercel
+        ? '/tmp/uploads'
+        : path.join(process.cwd(), 'public', 'uploads');
       if (!fs.existsSync(uploadDir)) {
         fs.mkdirSync(uploadDir, { recursive: true });
       }
@@ -266,7 +247,7 @@ JSON 형식:
       const filePath = path.join(uploadDir, savedFileName);
       fs.writeFileSync(filePath, buffer);
     } catch (err) {
-      console.error('Failed to save file physically to public/uploads:', err);
+      console.error('Failed to save file physically:', err);
     }
 
     return NextResponse.json({
