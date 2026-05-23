@@ -2,20 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 // @ts-ignore
 import mammoth from 'mammoth';
-import { PDFParse } from 'pdf-parse';
+import { PDFParse } from 'pdf-parse/node';
 import path from 'path';
-import { pathToFileURL } from 'url';
 import fs from 'fs';
 import crypto from 'crypto';
 
-// Resolve PDF worker path using process.cwd() for compatibility with Next.js bundling on Windows
-try {
-  const workerPath = path.join(process.cwd(), 'node_modules', 'pdfjs-dist', 'build', 'pdf.worker.mjs');
-  const workerUrl = pathToFileURL(workerPath).href;
-  PDFParse.setWorker(workerUrl);
-} catch (err) {
-  console.error('Failed to set PDF worker path:', err);
-}
 
 // Vercel 서버리스 환경에서는 /tmp만 쓰기 가능
 // public/uploads 초기화는 로컬 개발 환경에서만 수행
