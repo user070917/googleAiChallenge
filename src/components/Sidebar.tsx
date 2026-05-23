@@ -28,7 +28,6 @@ export default function Sidebar({ className = '' }: SidebarProps) {
     { name: '홈 (Home)', href: '/', icon: Home },
     { name: '업로드 (Uploads)', href: '/uploads', icon: UploadCloud },
     { name: '대시보드 (Dashboard)', href: '/dashboard', icon: LayoutDashboard },
-    { name: '이력 조회 (History)', href: '/history', icon: History },
     { name: '설정 (Settings)', href: '/settings', icon: Settings },
     { name: '고객지원 (Support)', href: '/support', icon: HelpCircle },
   ];
